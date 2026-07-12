@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Utamakan environment variable sistem (untuk production di Railway)
 # Jika tidak ada, coba baca dari file .env (untuk testing lokal)
 load_dotenv()
-TOKEN = os.getenv("8940266091:AAHfUeHEGaZMiYwkGfCUacIX3JODRxK5yPA")
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 if not TOKEN:
     logger.error("❌ TOKEN TIDAK DITEMUKAN! Pastikan environment variable 'TELEGRAM_BOT_TOKEN' sudah diset di dashboard Railway.")
