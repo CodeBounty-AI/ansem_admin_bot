@@ -1,62 +1,58 @@
 import os
+import sys
 import logging
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# ---------- LOGGING ----------
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# ---------- BACA TOKEN ----------
+logger.info("🚀 BOT SEDANG DIJALANKAN (VERSI DEBUG)...")
+
+# 1. CEK ENVIRONMENT VARIABLE
+logger.info("📋 Mencoba membaca environment variable...")
 load_dotenv()
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+token = os.getenv("TELEGRAM_BOT_TOKEN")
 
-if not TOKEN:
-    logger.error("❌ TOKEN TIDAK DITEMUKAN! Pastikan environment variable TELEGRAM_BOT_TOKEN sudah diset.")
-    exit(1)
+if not token:
+    logger.error("❌ TOKEN TIDAK DITEMUKAN!")
+    logger.info("📋 Daftar semua environment variable yang tersedia:")
+    for key in os.environ.keys():
+        logger.info(f"   - {key}")
+    sys.exit(1)
+else:
+    # Aman: hanya tampilkan 4 karakter pertama agar tidak bocor
+    logger.info(f"✅ Token ditemukan! (4 karakter pertama: {token[:4]}...)")
 
-logger.info("✅ Token berhasil dibaca.")
-
-# ---------- HANDLER START ----------
+# 2. HANDLER
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        welcome = "👋 Halo! Selamat datang di Bot Airdrop.\nKlik tombol di bawah untuk claim."
-        keyboard = [["🎁 Claim Airdrop"]]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-        await update.message.reply_text(welcome, reply_markup=reply_markup)
-    except Exception as e:
-        logger.error(f"Error di start: {e}")
+    keyboard = [["🎁 Claim Airdrop"]]
+    await update.message.reply_text(
+        "👋 Halo! Klik tombol di bawah.", 
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
 
-# ---------- HANDLER CLAIM ----------
-async def handle_claim(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        # GANTI link ini dengan website Anda
-        link = "https://example.com/claim-airdrop"
-        resp = f"🎉 *Claim Airdrop*\n\nKlik link berikut:\n[🔗 Klik di sini]({link})"
-        await update.message.reply_text(resp, parse_mode="Markdown")
-    except Exception as e:
-        logger.error(f"Error di claim: {e}")
+async def claim(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🎉 Claim Airdrop: https://example.com")
 
-# ---------- MAIN ----------
+# 3. MAIN
 def main():
-    logger.info("🚀 Bot mulai berjalan...")
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_claim))
-    
+    logger.info("🚀 Membangun aplikasi bot...")
     try:
-        logger.info("✅ Bot siap menerima pesan! Menjalankan polling...")
+        app = ApplicationBuilder().token(token).build()
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, claim))
+        
+        logger.info("✅ Bot siap. Menjalankan polling...")
         app.run_polling()
     except Exception as e:
-        logger.error(f"❌ Bot CRASH! Error: {e}")
+        logger.error(f"🚨 BOT CRASH! Error: {e}")
         if "Conflict" in str(e):
-            logger.error("⚠️ Terdeteksi KONFLIK! Ada bot lain yang berjalan dengan token yang sama.")
-            logger.error("➡️  Solusi: Revoke token di BotFather dan buat token baru.")
-        exit(1)
+            logger.error("⚠️ KONFLIK: Ada bot lain yang berjalan dengan token ini.")
+            logger.error("💡 Solusi: Revoke token di BotFather dan buat token baru.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
