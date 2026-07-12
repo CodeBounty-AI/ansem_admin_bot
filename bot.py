@@ -5,42 +5,40 @@ from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# Logging
+# Konfigurasi logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Load token dari Environment Variable (BUKAN dari file .env untuk production)
+# Coba baca dari .env (untuk lokal), tapi utamakan environment variable sistem
 load_dotenv()
 TOKEN = os.getenv("8940266091:AAHfUeHEGaZMiYwkGfCUacIX3JODRxK5yPA")
 
 if not TOKEN:
-    logger.error("❌ TOKEN TIDAK DITEMUKAN! Cek environment variable di dashboard.")
-    sys.exit(1)
+    logger.error("❌ TOKEN TIDAK DITEMUKAN! Pastikan environment variable 'TELEGRAM_BOT_TOKEN' sudah diset di dashboard.")
+    sys.exit(1)  # Keluar dengan kode error, log akan terlihat
 
-# Handler Start
+# Handler start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        welcome_text = "👋 Halo! Klik tombol di bawah untuk claim airdrop."
+        welcome = "👋 Halo! Klik tombol di bawah untuk claim airdrop."
         keyboard = [["🎁 Claim Airdrop"]]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-        await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+        await update.message.reply_text(welcome, reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Error di start: {e}")
 
-# Handler Tombol Claim
+# Handler claim
 async def handle_claim(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        # GANTI link ini dengan website asli Anda
-        link = "https://example.com/claim-airdrop" 
-        response = f"🎉 *Claim Airdrop*\n\nKlik link berikut:\n[🔗 Klik di sini]({link})"
-        await update.message.reply_text(response, parse_mode="Markdown")
+        link = "https://example.com/claim-airdrop"  # Ganti dengan link asli
+        resp = f"🎉 *Claim Airdrop*\n\nKlik link berikut:\n[🔗 Klik di sini]({link})"
+        await update.message.reply_text(resp, parse_mode="Markdown")
     except Exception as e:
         logger.error(f"Error di claim: {e}")
 
-# Main
 def main():
     logger.info("🚀 Bot mulai berjalan...")
     app = ApplicationBuilder().token(TOKEN).build()
