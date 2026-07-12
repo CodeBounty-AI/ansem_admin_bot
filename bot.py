@@ -1,78 +1,47 @@
 import os
-import logging
+import sys
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# ---------- LOGGING ----------
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+print("🚀 BOT MULAI...")
 
-# ---------- BACA TOKEN ----------
+# 1. Baca token
+print("📋 Mencoba membaca token...")
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
 if not TOKEN:
-    logger.error("❌ TOKEN TIDAK DITEMUKAN!")
-    exit(1)
+    print("❌ TOKEN TIDAK DITEMUKAN!")
+    print("Daftar semua environment variable:")
+    for key in os.environ.keys():
+        print(f"  {key}")
+    sys.exit(1)
 
-logger.info("✅ Token berhasil dibaca.")
+print(f"✅ Token ditemukan (4 karakter pertama: {TOKEN[:4]}...)")
 
-# ---------- HANDLER START (DENGAN LOG) ----------
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        logger.info(f"📩 Menerima perintah /start dari user {update.effective_user.id}")
-        
-        # Pesan sambutan
-        welcome_text = "👋 Halo! Selamat datang di Bot Airdrop.\nKlik tombol di bawah untuk claim."
-        
-        # Buat keyboard
-        keyboard = [
-            ["🎁 Claim Airdrop"]
-        ]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
-        
-        # Kirim pesan + keyboard
-        await update.message.reply_text(welcome_text, reply_markup=reply_markup)
-        logger.info("✅ Pesan dan keyboard berhasil dikirim.")
-        
-    except Exception as e:
-        logger.error(f"❌ Error di handler start: {e}")
-        # Kirim pesan darurat tanpa keyboard agar user tahu ada masalah
-        await update.message.reply_text("Maaf, terjadi kesalahan. Silakan coba lagi nanti.")
-
-# ---------- HANDLER CLAIM ----------
-async def handle_claim(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        logger.info(f"📩 Tombol Claim ditekan oleh user {update.effective_user.id}")
-        link = "https://example.com/claim-airdrop"  # Ganti dengan link Anda
-        resp = f"🎉 *Claim Airdrop*\n\nKlik link berikut:\n[🔗 Klik di sini]({link})"
-        await update.message.reply_text(resp, parse_mode="Markdown")
-        logger.info("✅ Pesan claim berhasil dikirim.")
-    except Exception as e:
-        logger.error(f"❌ Error di handler claim: {e}")
-
-# ---------- HANDLER UNKNOWN (FALLBACK) ----------
-async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Jika user mengetik sembarang selain tombol
+# 2. Handler start
+async def start(update: Update, context):
+    print("📩 Handler start dipanggil")
+    keyboard = [["🎁 Claim Airdrop"]]
     await update.message.reply_text(
-        "Silakan gunakan tombol di bawah atau kirim /start untuk memulai ulang.",
-        reply_markup=ReplyKeyboardMarkup([["🎁 Claim Airdrop"]], resize_keyboard=True)
+        "👋 Halo! Klik tombol di bawah.",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
 
-# ---------- MAIN ----------
+# 3. Handler claim
+async def claim(update: Update, context):
+    print("📩 Handler claim dipanggil")
+    await update.message.reply_text("🎉 Claim: https://example.com")
+
+# 4. Main
 def main():
-    logger.info("🚀 Bot mulai berjalan...")
+    print("🚀 Membangun aplikasi...")
     app = ApplicationBuilder().token(TOKEN).build()
-    
-    # Daftarkan handler
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.Regex('^🎁 Claim Airdrop$'), handle_claim))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, unknown))
+    app.add_handler(MessageHandler(filters.Regex('^🎁 Claim Airdrop$'), claim))
     
-    logger.info("✅ Bot siap menerima pesan! Menjalankan polling...")
+    print("✅ Bot siap. Menjalankan polling...")
     app.run_polling()
 
 if __name__ == "__main__":
